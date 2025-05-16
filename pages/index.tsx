@@ -1,8 +1,12 @@
+import * as React from "react";
+import * as SliderPrimitive from "@radix-ui/react-slider";
 import { Button } from "@/components/ui/button";
-import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
-import { CalendarDays, Filter, Home, LoaderCircle, MapPin, Search, SlidersHorizontal, Star, UserRound, UtensilsCrossed } from "lucide-react";
+import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { Separator } from "@/components/ui/separator";
+import { CalendarDays, Home, LoaderCircle, MapPin, Search, SlidersHorizontal, Star, UserRound, UtensilsCrossed } from "lucide-react";
 import Head from "next/head";
 import { ReactNode, useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 type NavMenuItem = {
   title: string;
@@ -98,29 +102,179 @@ function useFetchData() {
   return { data, loading, error };
 }
 
+const Slider = React.forwardRef<
+  React.ElementRef<typeof SliderPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root> & {
+    trackClassName?: string;
+    rangeClassName?: string;
+    thumbClassName?: string;
+  }
+>(
+  (
+    { className, trackClassName, rangeClassName, thumbClassName, ...props },
+    ref
+  ) => (
+    <SliderPrimitive.Root
+      ref={ref}
+      className={cn(
+        "relative flex w-full touch-none select-none items-center",
+        className
+      )}
+      {...props}
+    >
+      <SliderPrimitive.Track
+        className={cn(
+          "relative h-1.5 w-full grow overflow-hidden rounded-full bg-primary/20",
+          trackClassName
+        )}
+      >
+        <SliderPrimitive.Range
+          className={cn("absolute h-full bg-primary", rangeClassName)}
+        />
+      </SliderPrimitive.Track>
+      <SliderPrimitive.Thumb
+        className={cn(
+          "block h-6 w-6 rounded-full border border-primary/50 bg-background shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+          thumbClassName
+        )}
+      />
+      <SliderPrimitive.Thumb
+        className={cn(
+          "block h-6 w-6 rounded-full border border-primary/50 bg-background shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+          thumbClassName
+        )}
+      />
+    </SliderPrimitive.Root>
+  )
+);
+Slider.displayName = SliderPrimitive.Root.displayName;
+
 export default function RestaurantFinder() {
   const { data, loading } = useFetchData();
   const [activeNavItem, setActiveNavItem] = useState<string>("Home")
+  const [valuesSliderFilterSearch, setValuesSliderFilterSearch] = useState<number[]>([70,125])
 
   
 const SearchComponent = () => {
   return (
     <div className="flex justify-between items-center w-[90%] py-1 mt-6 absolute top-0">
       
-      <div className="w-[80%] bg-white border py-4 rounded-2xl flex items-center justify-around">
-        <Search className="text-[#F95624] w-8 h-8" />
+      <div className="w-[80%] bg-white border py-3 rounded-2xl flex items-center justify-around">
+        <Search className="text-[#F95624] w-6 h-6" />
         <input className="w-[80%] text-sm outline-none border-none" type="text" placeholder="Restaurant name or dish..." />
       </div>
 
-      <button className={`bg-[#F95624] flex justify-center items-center p-4 rounded-2xl`}>
-        <SlidersHorizontal />
-      </button>
+      {SearchFilterDrawer()}
 
     </div>
   )
 }
 
-const ListRestaurantsTab = (item: NavMenuItem) => {
+const SearchFilterDrawer = () => {
+  return(
+    <>
+      <Drawer>
+        <DrawerTrigger>
+          <button className={`bg-[#F95624] flex justify-center items-center p-3 rounded-2xl`}>
+            <SlidersHorizontal />
+          </button>
+        </DrawerTrigger>
+        <DrawerContent className="bg-white text-black w-full flex flex-col justify-center font-['Lexend'] items-center">
+          <DrawerHeader className="w-full">
+            <DrawerTitle className="w-full flex justify-between items-center">
+              <div className="w-9 h-2"></div>
+              <p className="text-xl">Filter</p>
+              <p className="text-sm text-gray-400">Reset</p>
+            </DrawerTitle>
+          </DrawerHeader>
+
+          <div className="w-full flex flex-col justify-between items-center px-4"> 
+            <p className="w-full font-medium mb-4">Categories</p>
+            <div className="grid grid-cols-3 gap-x-2">
+              <p className="px-4 text-center py-2 text-sm mb-2 border border-gray-300 rounded-xl">Fast Food</p>
+              <p className="px-4 text-center py-2 text-sm mb-2 border border-gray-300 rounded-xl">European</p>
+              <p className="px-4 text-center py-2 text-sm mb-2 border border-gray-300 rounded-xl bg-[#F95624] text-white">Italian</p>
+              <p className="px-4 text-center py-2 text-sm mb-2 border border-gray-300 rounded-xl">Mexican</p>
+              <p className="px-4 text-center py-2 text-sm mb-2 border border-gray-300 rounded-xl">Japanese</p>
+              <p className="px-4 text-center py-2 text-sm mb-2 border border-gray-300 rounded-xl">French</p>
+            </div>
+
+            <Separator className="my-4 bg-gray-300" />
+
+            <div className="w-full flex justify-between items-center">
+              <p className="font-medium">Distance to me</p>
+              <div className="flex justify-between items-center">
+                <p className="text-center h-12 w-12 text-4xl border border-gray-300 rounded-xl flex justify-center items-center">-</p>
+                <p className="text-center px-2 text-lg flex">2 km</p>
+                <p className="text-center h-12 w-12 text-3xl border border-gray-300 rounded-xl  flex justify-center items-center">+</p>
+              </div>
+            </div>
+
+            <Separator className="my-4 bg-gray-300" />
+            
+            <div className="w-full flex flex-col justify-start items-start">
+              <p className="font-medium mb-4">Rating</p>
+              <div className="flex justify-between items-center w-full">
+                <div className="px-3 py-1 space-x-1 text-lg border border-gray-300 rounded-xl flex justify-center items-center">
+                  <p>1</p>
+                  <Star size={15} className="text-amber-400" />
+                </div>
+                <div className="px-3 py-1 space-x-1 text-lg border border-gray-300 rounded-xl  flex justify-center items-center">
+                  <p>2</p>
+                  <Star size={15} className="text-amber-400" />
+                </div>
+                <div className="px-3 py-1 space-x-1 text-lg border border-gray-300 rounded-xl  flex justify-center items-center">
+                  <p>3</p>
+                  <Star size={15} className="text-amber-400" />
+                </div>
+                <div className="px-3 py-1 space-x-1 text-lg border border-gray-300 rounded-xl  flex justify-center items-center">
+                  <p>4</p>
+                  <Star size={15} className="text-amber-400" />
+                </div>
+                <div className="px-3 py-1 space-x-1 text-lg border border-gray-300 rounded-xl  flex justify-center items-center">
+                  <p>5</p>
+                  <Star size={15} className="text-amber-400" />
+                </div>
+              </div>
+            </div>
+
+            <Separator className="my-4 bg-gray-300" />
+
+            <div className="w-full flex flex-col justify-start items-start mb-4">
+              <div className="w-full flex justify-between items-center">
+                <p className="font-medium mb-4">Price</p>
+                <p className="font-medium mb-4 text-[#F95624]">{`$${valuesSliderFilterSearch[0]} - $${valuesSliderFilterSearch[1]}`}</p>
+              </div>
+              <div className="flex justify-between items-center w-full">
+
+              <Slider
+                defaultValue={valuesSliderFilterSearch}
+                minStepsBetweenThumbs={1}
+                max={250}
+                step={1}
+                onValueChange={(e) => setValuesSliderFilterSearch(e)}
+                rangeClassName="bg-[#F95624]"
+                thumbClassName="bg-[#F95624]"
+                trackClassName="bg-gray-200"
+              />
+                
+              </div>
+            </div>
+
+          </div>
+
+          <DrawerFooter className="w-full">
+            <DrawerClose className="w-full">
+              <Button className="w-full rounded-xl h-[6dvh] bg-[#F95624] hover:bg-[#F95624] text-white">Show results</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    </>
+  )
+}
+
+const ListRestaurantsDrawer = (item: NavMenuItem) => {
   return (
     <>
       <Drawer>
@@ -163,10 +317,10 @@ const RestaurantCard = (item: Restaurant) => {
       />
 
       <div className="flex flex-col justify-start items-start space-y-1">
-        <div className="flex items-center justify-between w-[65dvw]">
+        <div className="flex items-center justify-between w-[60dvw]">
           <p className="font-medium">{item.name}</p>
-          <div className="flex space-x-1 mr-2">
-            <Star className="text-amber-500" />
+          <div className="flex space-x-1 justify-center items-center">
+            <Star className="text-amber-500" size={20} />
             <p className="font-extralight text-gray-500">{item.rating}</p>
           </div>
         </div>
@@ -212,7 +366,7 @@ const RestaurantCard = (item: Restaurant) => {
 
         {SearchComponent()}
 
-        <nav className="rounded-xl z-50 flex justify-evenly items-center w-[90%] py-2 mb-6 absolute bottom-0 bg-white shadow-[rgba(0,0,0,0.1)_0px_4px_5px_5px]">
+        <nav className="rounded-xl z-50 flex justify-evenly items-center w-[90%] py-2 mb-6 fixed bottom-0 bg-white shadow-[rgba(0,0,0,0.1)_0px_4px_5px_5px]">
           { 
             data?.nav_menu_items.map((item) => (
               item.title !== "Restaurants" ?
@@ -221,7 +375,7 @@ const RestaurantCard = (item: Restaurant) => {
                 {item.icon}
                 <p className="text-xs">{item.title}</p>
               </div> :
-              ListRestaurantsTab(item)
+              ListRestaurantsDrawer(item)
             ))
           }
         </nav>
