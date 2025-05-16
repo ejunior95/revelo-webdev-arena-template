@@ -152,7 +152,10 @@ Slider.displayName = SliderPrimitive.Root.displayName;
 export default function RestaurantFinder() {
   const { data, loading } = useFetchData();
   const [activeNavItem, setActiveNavItem] = useState<string>("Home")
-  const [valuesSliderFilterSearch, setValuesSliderFilterSearch] = useState<number[]>([70,125])
+  const [categorySearchFilter, setCategorySearchFilter] = useState<string[]>(["Italian"])
+  const [distanceSearchFilter, setDistanceSearchFilter] = useState<number>(2)
+  const [ratingsSearchFilter, setRatingsSearchFilter] = useState<number[]>([3,4])
+  const [pricesSearchFilter, setPricesSearchFilter] = useState<number[]>([70,125])
 
   
 const SearchComponent = () => {
@@ -171,6 +174,38 @@ const SearchComponent = () => {
 }
 
 const SearchFilterDrawer = () => {
+
+  const handleDistanceChange = (operation: string) => {
+    if(operation === 'minus' && distanceSearchFilter > 1) {
+      setDistanceSearchFilter(distanceSearchFilter - 1)
+    }
+    if(operation === 'plus') {
+      setDistanceSearchFilter(distanceSearchFilter + 1)
+    }
+  }
+
+  const handleSelectRating = (value: number) => {
+    if(ratingsSearchFilter.includes(value)) {
+      setRatingsSearchFilter(ratingsSearchFilter.filter((r) => r !== value));
+    } else {
+      setRatingsSearchFilter([...ratingsSearchFilter, value])
+    }
+  }
+
+  const handleSelectCategory = (value: string) => {
+    if(categorySearchFilter.includes(value)) {
+      setCategorySearchFilter(categorySearchFilter.filter((r) => r !== value));
+    } else {
+      setCategorySearchFilter([...categorySearchFilter, value])
+    }
+  }
+
+  const handleResetFilters = () => {
+    setCategorySearchFilter([])
+    setDistanceSearchFilter(1)
+    setRatingsSearchFilter([])
+  }
+
   return(
     <>
       <Drawer>
@@ -184,19 +219,31 @@ const SearchFilterDrawer = () => {
             <DrawerTitle className="w-full flex justify-between items-center">
               <div className="w-9 h-2"></div>
               <p className="text-xl">Filter</p>
-              <p className="text-sm text-gray-400">Reset</p>
+              <p onClick={handleResetFilters} className="text-sm text-gray-400">Reset</p>
             </DrawerTitle>
           </DrawerHeader>
 
           <div className="w-full flex flex-col justify-between items-center px-4"> 
             <p className="w-full font-medium mb-4">Categories</p>
             <div className="grid grid-cols-3 gap-x-2">
-              <p className="px-4 text-center py-2 text-sm mb-2 border border-gray-300 rounded-xl">Fast Food</p>
-              <p className="px-4 text-center py-2 text-sm mb-2 border border-gray-300 rounded-xl">European</p>
-              <p className="px-4 text-center py-2 text-sm mb-2 border border-gray-300 rounded-xl bg-[#F95624] text-white">Italian</p>
-              <p className="px-4 text-center py-2 text-sm mb-2 border border-gray-300 rounded-xl">Mexican</p>
-              <p className="px-4 text-center py-2 text-sm mb-2 border border-gray-300 rounded-xl">Japanese</p>
-              <p className="px-4 text-center py-2 text-sm mb-2 border border-gray-300 rounded-xl">French</p>
+              <p onClick={() => handleSelectCategory('Fast Food')} className={`
+              ${categorySearchFilter.includes('Fast Food') ? 'bg-[#F95624] text-white' : 'bg-transparent'} px-4 text-center py-2 text-sm mb-2 border border-gray-300 rounded-xl`
+              }>Fast Food</p>
+              <p onClick={() => handleSelectCategory('European')} className={`
+              ${categorySearchFilter.includes('European') ? 'bg-[#F95624] text-white' : 'bg-transparent'} px-4 text-center py-2 text-sm mb-2 border border-gray-300 rounded-xl`
+              }>European</p>
+              <p onClick={() => handleSelectCategory('Italian')} className={`
+              ${categorySearchFilter.includes('Italian') ? 'bg-[#F95624] text-white' : 'bg-transparent'} px-4 text-center py-2 text-sm mb-2 border border-gray-300 rounded-xl`
+              } >Italian</p>
+              <p onClick={() => handleSelectCategory('Mexican')} className={`
+              ${categorySearchFilter.includes('Mexican') ? 'bg-[#F95624] text-white' : 'bg-transparent'} px-4 text-center py-2 text-sm mb-2 border border-gray-300 rounded-xl`
+              }>Mexican</p>
+              <p onClick={() => handleSelectCategory('Japanese')} className={`
+              ${categorySearchFilter.includes('Japanese') ? 'bg-[#F95624] text-white' : 'bg-transparent'} px-4 text-center py-2 text-sm mb-2 border border-gray-300 rounded-xl`
+              }>Japanese</p>
+              <p onClick={() => handleSelectCategory('French')} className={`
+              ${categorySearchFilter.includes('French') ? 'bg-[#F95624] text-white' : 'bg-transparent'} px-4 text-center py-2 text-sm mb-2 border border-gray-300 rounded-xl`
+              }>French</p>
             </div>
 
             <Separator className="my-4 bg-gray-300" />
@@ -204,9 +251,9 @@ const SearchFilterDrawer = () => {
             <div className="w-full flex justify-between items-center">
               <p className="font-medium">Distance to me</p>
               <div className="flex justify-between items-center">
-                <p className="text-center h-12 w-12 text-4xl border border-gray-300 rounded-xl flex justify-center items-center">-</p>
-                <p className="text-center px-2 text-lg flex">2 km</p>
-                <p className="text-center h-12 w-12 text-3xl border border-gray-300 rounded-xl  flex justify-center items-center">+</p>
+                <p onClick={() => handleDistanceChange('minus')} className="text-center h-12 w-12 text-4xl border border-gray-300 rounded-xl flex justify-center items-center">-</p>
+                <p className="text-center px-2 text-lg flex text-[#F95624]">{distanceSearchFilter} km</p>
+                <p onClick={() => handleDistanceChange('plus')} className="text-center h-12 w-12 text-3xl border border-gray-300 rounded-xl  flex justify-center items-center">+</p>
               </div>
             </div>
 
@@ -215,23 +262,28 @@ const SearchFilterDrawer = () => {
             <div className="w-full flex flex-col justify-start items-start">
               <p className="font-medium mb-4">Rating</p>
               <div className="flex justify-between items-center w-full">
-                <div className="px-3 py-1 space-x-1 text-lg border border-gray-300 rounded-xl flex justify-center items-center">
+                <div onClick={() => handleSelectRating(1)} 
+                  className={`${ratingsSearchFilter.includes(1) ? 'bg-[#F95624] text-white' : 'bg-transparent'} px-3 py-1 space-x-1 text-lg border border-gray-300 rounded-xl flex justify-center items-center`}>
                   <p>1</p>
                   <Star size={15} className="text-amber-400" />
                 </div>
-                <div className="px-3 py-1 space-x-1 text-lg border border-gray-300 rounded-xl  flex justify-center items-center">
+                <div onClick={() => handleSelectRating(2)} 
+                  className={`${ratingsSearchFilter.includes(2) ? 'bg-[#F95624] text-white' : 'bg-transparent'} px-3 py-1 space-x-1 text-lg border border-gray-300 rounded-xl  flex justify-center items-center`}>
                   <p>2</p>
                   <Star size={15} className="text-amber-400" />
                 </div>
-                <div className="px-3 py-1 space-x-1 text-lg border border-gray-300 rounded-xl  flex justify-center items-center">
+                <div onClick={() => handleSelectRating(3)}  
+                  className={`${ratingsSearchFilter.includes(3) ? 'bg-[#F95624] text-white' : 'bg-transparent'} px-3 py-1 space-x-1 text-lg border border-gray-300 rounded-xl  flex justify-center items-center`}>
                   <p>3</p>
                   <Star size={15} className="text-amber-400" />
                 </div>
-                <div className="px-3 py-1 space-x-1 text-lg border border-gray-300 rounded-xl  flex justify-center items-center">
+                <div onClick={() => handleSelectRating(4)} 
+                  className={`${ratingsSearchFilter.includes(4) ? 'bg-[#F95624] text-white' : 'bg-transparent'} px-3 py-1 space-x-1 text-lg border border-gray-300 rounded-xl  flex justify-center items-center`}>
                   <p>4</p>
                   <Star size={15} className="text-amber-400" />
                 </div>
-                <div className="px-3 py-1 space-x-1 text-lg border border-gray-300 rounded-xl  flex justify-center items-center">
+                <div onClick={() => handleSelectRating(5)} 
+                  className={`${ratingsSearchFilter.includes(5) ? 'bg-[#F95624] text-white' : 'bg-transparent'} px-3 py-1 space-x-1 text-lg border border-gray-300 rounded-xl  flex justify-center items-center`}>
                   <p>5</p>
                   <Star size={15} className="text-amber-400" />
                 </div>
@@ -243,16 +295,16 @@ const SearchFilterDrawer = () => {
             <div className="w-full flex flex-col justify-start items-start mb-4">
               <div className="w-full flex justify-between items-center">
                 <p className="font-medium mb-4">Price</p>
-                <p className="font-medium mb-4 text-[#F95624]">{`$${valuesSliderFilterSearch[0]} - $${valuesSliderFilterSearch[1]}`}</p>
+                <p className="font-medium mb-4 text-[#F95624]">{`$${pricesSearchFilter[0]} - $${pricesSearchFilter[1]}`}</p>
               </div>
               <div className="flex justify-between items-center w-full">
 
               <Slider
-                defaultValue={valuesSliderFilterSearch}
+                defaultValue={pricesSearchFilter}
                 minStepsBetweenThumbs={1}
                 max={250}
                 step={1}
-                onValueChange={(e) => setValuesSliderFilterSearch(e)}
+                onValueChange={(e) => setPricesSearchFilter(e)}
                 rangeClassName="bg-[#F95624]"
                 thumbClassName="bg-[#F95624]"
                 trackClassName="bg-gray-200"
@@ -369,16 +421,16 @@ const RestaurantCard = (item: Restaurant) => {
         <nav className="rounded-xl z-50 flex justify-evenly items-center w-[90%] py-2 mb-6 fixed bottom-0 bg-white shadow-[rgba(0,0,0,0.1)_0px_4px_5px_5px]">
           { 
             data?.nav_menu_items.map((item) => (
-              item.title !== "Restaurants" ?
               <div key={item.title} onClick={() => setActiveNavItem(item.title)} className={`flex flex-col justify-center items-center space-y-1 ${
                 activeNavItem === item.title ? `text-[#F95624]` : 'text-gray-400'}`}>
                 {item.icon}
                 <p className="text-xs">{item.title}</p>
-              </div> :
-              ListRestaurantsDrawer(item)
+              </div> 
             ))
           }
         </nav>
+
+        
 
 
       </div>
