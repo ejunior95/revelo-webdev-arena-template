@@ -181,6 +181,7 @@ Slider.displayName = SliderPrimitive.Root.displayName;
 
 export default function RestaurantFinder() {
   const { data, loading } = useFetchData();
+  const [theme, setTheme] = useState("dark");
   const [activeNavItem, setActiveNavItem] = useState<string>("Home")
   const [categorySearchFilter, setCategorySearchFilter] = useState<string[]>(["Italian"])
   const [distanceSearchFilter, setDistanceSearchFilter] = useState<number>(2)
@@ -267,15 +268,15 @@ const SearchComponent = () => {
       {
         activeNavItem === "Restaurants" &&
         <div className="w-full flex justify-between items-center mb-2">
-          <ChevronLeft className="border border-gray-300 rounded-full text-black" />
-          <p className="text-black w-full text-center font-semibold">List of restaurants</p>
-          <Heart className="border border-gray-300 rounded-full text-black" />
+          <ChevronLeft onClick={() => setActiveNavItem("Home")} size={24} className={`p-2 border ${theme === "dark" ? 'border-gray-500  text-white' : 'border-gray-300  text-black'} rounded-full w-12 h-10`} />
+          <p className={`${theme === "dark" ? 'text-white' : 'text-black'} w-full text-center font-semibold`}>List of restaurants</p>
+          <Heart size={24} className={`p-2 border ${theme === "dark" ? 'border-gray-500  text-white' : 'border-gray-300  text-black'} rounded-full w-12 h-10`} />
         </div>
       }
-      <div className="flex justify-between items-center w-full my-2">
-        <div className="w-[80%] bg-white border border-gray-300 py-3 rounded-2xl flex items-center justify-around">
+      <div className="flex justify-between items-center w-full my-2 z-30">
+        <div className={`w-[80%] ${theme === "dark" ? 'bg-black' : 'bg-white'} border py-3 rounded-2xl flex items-center justify-around`}>
           <Search className="text-[#F95624] w-6 h-6" />
-          <input className="w-[80%] text-sm text-black outline-none border-none" type="text" placeholder="Restaurant name or dish..." />
+          <input className={`w-[80%] text-sm ${theme === "dark" ? 'text-white' : 'text-black'} bg-transparent outline-none border-none`} type="text" placeholder="Restaurant name or dish..." />
         </div>
         {SearchFilterDrawer()}
       </div>
@@ -325,7 +326,7 @@ const SearchFilterDrawer = () => {
             <SlidersHorizontal />
           </button>
         </DrawerTrigger>
-        <DrawerContent className="bg-white text-black w-full flex flex-col justify-center font-['Lexend'] items-center">
+        <DrawerContent className={`${theme === "dark" ? 'bg-black' : 'bg-white'} text-black w-full flex flex-col justify-center font-['Lexend'] items-center`}>
           <DrawerHeader className="w-full">
             <DrawerTitle className="w-full flex justify-between items-center">
               <div className="w-9 h-2"></div>
@@ -440,12 +441,12 @@ const SearchFilterDrawer = () => {
 const ListRestaurantsTab = () => {
   return (
     <>
-        <div className="bg-white shadow-[rgba(0,0,0,0.1)_0px_4px_5px_5px] w-full flex flex-col justify-center rounded-t-3xl font-['Lexend'] items-center absolute bottom-0 left-0 pb-[10dvh] z-40">
+        <div className={`${theme === "dark" ? 'bg-black border' : 'bg-white shadow-[rgba(0,0,0,0.1)_0px_4px_5px_5px]'} transform w-full flex flex-col justify-center rounded-t-3xl font-['Lexend'] items-center absolute bottom-0 left-0 pb-[10dvh] z-40  transition duration-500 hover:translate-y-[100%]`}>
           <div className="w-full justify-center place-items-center py-2">
-            <div className="w-10 h-1 bg-gray-200 rounded-xl" />
+            <div className={`w-10 h-1 ${theme === "dark" ? 'bg-gray-500' : 'bg-gray-200'} rounded-xl`} />
           </div>
           <div className="w-full mt-2 mb-4">
-            <p className="text-black w-full text-center font-semibold">List of restaurants</p>
+            <p className={`${theme === "dark" ? 'text-white' : 'text-black'} w-full text-center font-semibold`}>List of restaurants</p>
           </div>
 
           {
@@ -460,7 +461,7 @@ const ListRestaurantsTab = () => {
 
 const RestaurantCard = (item: Restaurant) => {
   return (
-    <div key={item.name} className="rounded-xl text-black w-[90dvw] flex items-center py-6 px-3 space-x-3 mb-6 bg-white shadow-[rgba(0,0,0,0.1)_0px_4px_5px_5px]">
+    <div key={item.name} className={`rounded-xl w-[90dvw] flex items-center py-6 px-3 space-x-3 mb-6 ${theme === "dark" ? 'bg-black border' : 'bg-white shadow-[rgba(0,0,0,0.1)_0px_4px_5px_5px] text-black'}`}>
       <img
         src={item.image}
         alt={item.name}
@@ -469,16 +470,16 @@ const RestaurantCard = (item: Restaurant) => {
 
       <div className="flex flex-col justify-start items-start space-y-1">
         <div className="flex items-center justify-between w-[60dvw]">
-          <p className="font-medium">{item.name}</p>
-          <div className="flex space-x-1 justify-center items-center">
-            <Star className="text-amber-500" size={20} />
-            <p className="font-extralight text-gray-500">{item.rating}</p>
+          <p className="font-medium w-[70%] text-sm truncate">{item.name}</p>
+          <div className="flex space-x-1 justify-center items-center mr-3">
+            <Star className="text-amber-500" size={15} />
+            <p className={`font-extralight ${theme === "dark" ? 'text-gray-300' : 'text-gray-500'} text-xs`}>{item.rating}</p>
           </div>
         </div>
 
         <div className="flex justify-start items-center w-[65dvw]">
           <MapPin className="text-orange-600" />
-          <p className="text-sm text-gray-400 w-[80%] truncate">{item.address}</p>
+          <p className={`text-sm ${theme === "dark" ? 'text-gray-300' : 'text-gray-400'}  w-[80%] truncate`}>{item.address}</p>
         </div>
       </div>
 
@@ -489,7 +490,7 @@ const RestaurantCard = (item: Restaurant) => {
   return (
     loading ? ( 
       <> 
-        <div className='w-full h-dvh flex-col place-content-center justify-items-center bg-white text-black'>
+        <div className={`w-full h-dvh flex-col place-content-center justify-items-center ${theme === "dark" ? 'bg-black' : 'bg-white'} text-black`}>
           <LoaderCircle className='w-20 h-20 animate-spin' />
           <p className='mt-2'>Loading...</p>
         </div> 
@@ -507,13 +508,13 @@ const RestaurantCard = (item: Restaurant) => {
         <div
           ref={mapRef}
           id="google-map-background"
-          className="absolute inset-0 w-full h-full z-10"
+          className={`absolute inset-0 w-full h-full ${activeNavItem === "Home" && `z-10`}`}
         />
       
       <div id="main" className={`
         w-full 
+        ${theme === "dark" ? 'bg-black' : 'bg-white'}
         flex 
-        ${activeNavItem !== "Home" ? `bg-white` : `bg-transparent`}
         flex-col 
         justify-between 
         items-center 
@@ -521,14 +522,14 @@ const RestaurantCard = (item: Restaurant) => {
         bg-gradient-to-tr 
         font-['Lexend'] 
         relative
-        overflow-hidden`
-        }>
+        overflow-hidden
+        `}>
 
-        {SearchComponent()}
+        { activeNavItem !== "History" && activeNavItem !== "Profile"  && SearchComponent() }
 
         {
           activeNavItem === "Restaurants" && data?.restaurants && data.restaurants.length > 0 && (
-              <ScrollArea className={`w-full h-[80dvh] py-4 mt-[10dvh]`}>
+              <ScrollArea className={`w-full h-[70dvh] py-4 mt-[20dvh]`}>
                 <div className="w-full flex flex-col justify-center items-center">
                   {
                     data?.restaurants.map((restaurant: Restaurant) => (RestaurantCard(restaurant)))
@@ -545,7 +546,7 @@ const RestaurantCard = (item: Restaurant) => {
           )
         }
 
-        <nav className="bg-white rounded-xl z-50 flex justify-evenly items-center w-[90%] py-2 my-6 fixed bottom-0 shadow-[rgba(0,0,0,0.1)_0px_4px_5px_5px]">
+        <nav className={`${theme === "dark" ? 'bg-black border' : 'bg-white shadow-[rgba(0,0,0,0.1)_0px_4px_5px_5px]'} rounded-xl z-50 flex justify-evenly items-center w-[90%] py-2 my-6 fixed bottom-0`}>
           { 
             data?.nav_menu_items.map((item) => (
               <div key={item.title} onClick={() => setActiveNavItem(item.title)} className={`flex flex-col justify-center items-center space-y-1 ${
