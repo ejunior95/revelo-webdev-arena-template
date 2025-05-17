@@ -3,10 +3,12 @@ import * as SliderPrimitive from "@radix-ui/react-slider";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Separator } from "@/components/ui/separator";
-import { CalendarDays, Home, LoaderCircle, MapPin, Search, SlidersHorizontal, Star, UserRound, UtensilsCrossed } from "lucide-react";
+import { CalendarDays, ChevronLeft, Heart, Home, LoaderCircle, MapPin, Search, SlidersHorizontal, Star, UserRound, UtensilsCrossed } from "lucide-react";
 import Head from "next/head";
 import { ReactNode, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+const Maps_API_KEY = "AIzaSyDa2jDnCojs2CBL5PhL1-zAhikNVMoq4tA";
 
 type NavMenuItem = {
   title: string;
@@ -16,8 +18,11 @@ type NavMenuItem = {
 type Restaurant = {
   name: string;
   address: string;
-  rating: string;
+  rating: number;
   image: string;
+  category: string;
+  distance: number;
+  averagePrice: number;
 }
 
 type ApiResponse = {
@@ -48,32 +53,47 @@ const mockData: ApiResponse = {
     {
       name: "Osteria Francescana",
       address: "2727 Indian Creek Dr, Miami Beach, FL 50789",
-      rating: "4,8",
-      image: "https://base-discordia-app.s3.us-east-2.amazonaws.com/revelo-images/img-restaurant1.jpg"
+      rating: 4.8,
+      image: "https://base-discordia-app.s3.us-east-2.amazonaws.com/revelo-images/img-restaurant1.jpg",
+      category: "French",
+      distance: 5,
+      averagePrice: 100
     },
     {
       name: "Yardbird Table & Bar",
       address: "1600 Lenox Ave, Miami Beach, FL 33139",
-      rating: "4,5",
-      image: "https://base-discordia-app.s3.us-east-2.amazonaws.com/revelo-images/img-restaurant2.jpg"
+      rating: 4.5,
+      image: "https://base-discordia-app.s3.us-east-2.amazonaws.com/revelo-images/img-restaurant2.jpg",
+      category: "Japanese",
+      distance: 20,
+      averagePrice: 72
     },
     {
       name: "Bodega Taqueira y Tequila",
       address: "1220 16th St, Miami Beach, FL 43177",
-      rating: "4,8",
-      image: "https://base-discordia-app.s3.us-east-2.amazonaws.com/revelo-images/img-restaurant3.jpg"
+      rating: 4.8,
+      image: "https://base-discordia-app.s3.us-east-2.amazonaws.com/revelo-images/img-restaurant3.jpg",
+      category: "Mexican",
+      distance: 12,
+      averagePrice: 88
     },
     {
       name: "Broken Shaker at Freehand",
       address: "2727 Indian Creek Dr, Miami Beach, FL 61955",
-      rating: "4,3",
-      image: "https://base-discordia-app.s3.us-east-2.amazonaws.com/revelo-images/img-restaurant4.jpeg"
+      rating: 4.3,
+      image: "https://base-discordia-app.s3.us-east-2.amazonaws.com/revelo-images/img-restaurant4.jpeg",
+      category: "Fast Food",
+      distance: 10,
+      averagePrice: 120
     },
     {
       name: "MILA Restaurant",
       address: "1636 Meridian Ave Rooftop, Miami Beach, FL 95136",
-      rating: "4,5",
-      image: "https://base-discordia-app.s3.us-east-2.amazonaws.com/revelo-images/img-restaurant5.png"
+      rating: 4.5,
+      image: "https://base-discordia-app.s3.us-east-2.amazonaws.com/revelo-images/img-restaurant5.png",
+      category: "Fast Food",
+      distance: 2,
+      averagePrice: 200
     },
   ]
 };
@@ -87,7 +107,6 @@ function useFetchData() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 1000));
         setData(mockData);
         setLoading(false);
       } catch (err) {
@@ -99,7 +118,7 @@ function useFetchData() {
     fetchData();
   }, []);
 
-  return { data, loading, error };
+  return { data, loading, setLoading, error };
 }
 
 const Slider = React.forwardRef<
@@ -150,24 +169,97 @@ const Slider = React.forwardRef<
 Slider.displayName = SliderPrimitive.Root.displayName;
 
 export default function RestaurantFinder() {
-  const { data, loading } = useFetchData();
+  const { data, loading, setLoading } = useFetchData();
   const [activeNavItem, setActiveNavItem] = useState<string>("Home")
   const [categorySearchFilter, setCategorySearchFilter] = useState<string[]>(["Italian"])
   const [distanceSearchFilter, setDistanceSearchFilter] = useState<number>(2)
   const [ratingsSearchFilter, setRatingsSearchFilter] = useState<number[]>([3,4])
   const [pricesSearchFilter, setPricesSearchFilter] = useState<number[]>([70,125])
+  
+  const mapRef = React.useRef<HTMLDivElement>(null);
+  const mapInstanceRef = React.useRef<google.maps.Map | null>(null);
+
+useEffect(() => {
+  const initMap = () => {
+    setLoading(true)
+    try {
+      if (mapRef.current && !mapInstanceRef.current) {
+        const map = new google.maps.Map(mapRef.current, {
+          center: { lat: -23.55052, lng: -46.633308 },
+          zoom: 17,
+          disableDefaultUI: true,
+          draggable: true,
+          zoomControl: false,
+          scrollwheel: false,
+          disableDoubleClickZoom: true,
+          styles: [
+            { featureType: "all", elementType: "labels", stylers: [{ visibility: "off" }] },
+            { featureType: "road", elementType: "geometry", stylers: [{ visibility: "simplified" }] },
+            { featureType: "poi", stylers: [{ visibility: "off" }] },
+            { featureType: "transit", stylers: [{ visibility: "off" }] },
+          ],
+        });
+        mapInstanceRef.current = map;
+      }
+    } catch (error) {
+      console.error(`Error on maps: ${error}`)
+    }
+    setLoading(false)
+  };
+
+  const loadGoogleMapsScript = () => {
+    if (document.querySelector(`script[src*="maps.googleapis.com"]`)) {
+      if (window.google && window.google.maps) {
+        initMap();
+      } else {
+        const checkInterval = setInterval(() => {
+          if (window.google && window.google.maps) {
+            clearInterval(checkInterval);
+            initMap();
+          }
+        }, 300);
+      }
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${Maps_API_KEY}&loading=async`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      initMap();
+    };
+    document.head.appendChild(script);
+  };
+
+  loadGoogleMapsScript();
+
+  return () => {
+    if ((window as any).initMap) {
+      delete (window as any).initMap;
+    }
+  };
+}, [Maps_API_KEY]);
 
   
 const SearchComponent = () => {
   return (
-    <div className="flex justify-between items-center w-[90%] py-1 mt-6 absolute top-0">
-      
-      <div className="w-[80%] bg-white border py-3 rounded-2xl flex items-center justify-around">
-        <Search className="text-[#F95624] w-6 h-6" />
-        <input className="w-[80%] text-sm outline-none border-none" type="text" placeholder="Restaurant name or dish..." />
+    <div className="flex flex-col justify-center items-center w-[90%] py-1 mt-6 absolute top-0">
+      {
+        activeNavItem === "Restaurants" &&
+        <div className="w-full flex justify-between items-center mb-2">
+          <ChevronLeft className="border border-gray-300 rounded-full text-black" />
+          <p className="text-black w-full text-center font-semibold">List of restaurants</p>
+          <Heart className="border border-gray-300 rounded-full text-black" />
+        </div>
+      }
+      <div className="flex justify-between items-center w-full my-2">
+        <div className="w-[80%] bg-white border border-gray-300 py-3 rounded-2xl flex items-center justify-around">
+          <Search className="text-[#F95624] w-6 h-6" />
+          <input className="w-[80%] text-sm text-black outline-none border-none" type="text" placeholder="Restaurant name or dish..." />
+        </div>
+        {SearchFilterDrawer()}
       </div>
-
-      {SearchFilterDrawer()}
 
     </div>
   )
@@ -326,35 +418,23 @@ const SearchFilterDrawer = () => {
   )
 }
 
-const ListRestaurantsDrawer = (item: NavMenuItem) => {
+const ListRestaurantsTab = () => {
   return (
     <>
-      <Drawer>
-        <DrawerTrigger>
-          <div key={item.title} onClick={() => setActiveNavItem(item.title)} className={`flex flex-col justify-center items-center space-y-1 ${
-                activeNavItem === item.title ? `text-[#F95624]` : 'text-gray-400'}`}>
-                {item.icon}
-                <p className="text-xs">{item.title}</p>
+        <div className="bg-white shadow-[rgba(0,0,0,0.1)_0px_4px_5px_5px] w-full flex flex-col justify-center rounded-t-3xl font-['Lexend'] items-center absolute bottom-0 left-0 pb-[10dvh]">
+          <div className="w-full justify-center place-items-center py-2">
+            <div className="w-10 h-1 bg-gray-200 rounded-xl" />
           </div>
-        </DrawerTrigger>
-        <DrawerContent className="bg-white w-full flex flex-col justify-center font-['Lexend']  items-center">
-          <DrawerHeader className="w-full">
-            <DrawerTitle className="text-black w-full text-center">List of restaurants</DrawerTitle>
-          </DrawerHeader>
+          <div className="w-full mt-2 mb-4">
+            <p className="text-black w-full text-center font-semibold">List of restaurants</p>
+          </div>
 
           {
             data?.restaurants.slice(0,2)
             .map((restaurant: Restaurant) => (RestaurantCard(restaurant)))
           }
 
-          <DrawerFooter className="w-full">
-            <DrawerClose className="w-full">
-              <Button className="w-full bg-[#F95624] hover:bg-[#F95624] text-white">See more</Button>
-              <Button className="w-full ">Back</Button>
-            </DrawerClose>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
+        </div>
     </>
   )
 }
@@ -404,21 +484,49 @@ const RestaurantCard = (item: Restaurant) => {
           <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet" />
       </Head>
 
-      <div id="main" className="
+      
+        <div
+          ref={mapRef}
+          id="google-map-background"
+          className="absolute inset-0 w-full h-full z-0"
+        />
+      
+      <div id="main" className={`
         w-full 
-        bg-white 
         flex 
+        ${activeNavItem !== "Home" ? `bg-white` : `bg-transparent`}
         flex-col 
-        justify-center 
+        justify-between 
         items-center 
         min-h-dvh 
         bg-gradient-to-tr 
         font-['Lexend'] 
-        relative">
+        relative
+        overflow-hidden`
+        }>
 
         {SearchComponent()}
 
-        <nav className="rounded-xl z-50 flex justify-evenly items-center w-[90%] py-2 mb-6 fixed bottom-0 bg-white shadow-[rgba(0,0,0,0.1)_0px_4px_5px_5px]">
+        {
+          activeNavItem === "Restaurants" && data?.restaurants && data.restaurants.length > 0 && (
+              <ScrollArea className={`w-full h-[80dvh] py-4 mt-[10dvh]`}>
+                <div className="w-full flex flex-col justify-center items-center">
+                  {
+                    data?.restaurants.map((restaurant: Restaurant) => (RestaurantCard(restaurant)))
+                  }
+                </div>
+              </ScrollArea>
+            )
+        }
+        {
+          activeNavItem === "Restaurants" && (!data?.restaurants || data.restaurants.length === 0) && (
+                 <div className="mt-48 text-center p-4">
+                    <p className="text-gray-600">Nenhum restaurante encontrado com os filtros atuais.</p>
+                </div>
+          )
+        }
+
+        <nav className="bg-white rounded-xl z-50 flex justify-evenly items-center w-[90%] py-2 my-6 fixed bottom-0 shadow-[rgba(0,0,0,0.1)_0px_4px_5px_5px]">
           { 
             data?.nav_menu_items.map((item) => (
               <div key={item.title} onClick={() => setActiveNavItem(item.title)} className={`flex flex-col justify-center items-center space-y-1 ${
@@ -430,8 +538,7 @@ const RestaurantCard = (item: Restaurant) => {
           }
         </nav>
 
-        
-
+        { activeNavItem === "Home" && ListRestaurantsTab() }
 
       </div>
 
