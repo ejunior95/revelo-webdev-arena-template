@@ -10,6 +10,11 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 const Maps_API_KEY = "AIzaSyDa2jDnCojs2CBL5PhL1-zAhikNVMoq4tA";
 
+declare const window: Window & {
+  initMap?: () => void;
+  google?: typeof google
+};
+
 type NavMenuItem = {
   title: string;
   icon: ReactNode
@@ -23,6 +28,7 @@ type Restaurant = {
   category: string;
   distance: number;
   averagePrice: number;
+  position: { lat: number, lng: number };
 }
 
 type ApiResponse = {
@@ -51,49 +57,54 @@ const mockData: ApiResponse = {
   ],
   "restaurants": [
     {
-      name: "Osteria Francescana",
-      address: "2727 Indian Creek Dr, Miami Beach, FL 50789",
-      rating: 4.8,
-      image: "https://base-discordia-app.s3.us-east-2.amazonaws.com/revelo-images/img-restaurant1.jpg",
-      category: "French",
-      distance: 5,
-      averagePrice: 100
-    },
-    {
       name: "Yardbird Table & Bar",
       address: "1600 Lenox Ave, Miami Beach, FL 33139",
       rating: 4.5,
       image: "https://base-discordia-app.s3.us-east-2.amazonaws.com/revelo-images/img-restaurant2.jpg",
       category: "Japanese",
       distance: 20,
-      averagePrice: 72
+      averagePrice: 72,
+      position: { lat: 25.7890725, lng: -80.1401045 }
     },
     {
       name: "Bodega Taqueira y Tequila",
-      address: "1220 16th St, Miami Beach, FL 43177",
+      address: "1220 16th St, Miami Beach, FL 33139",
       rating: 4.8,
       image: "https://base-discordia-app.s3.us-east-2.amazonaws.com/revelo-images/img-restaurant3.jpg",
       category: "Mexican",
       distance: 12,
-      averagePrice: 88
+      averagePrice: 88,
+      position: { lat: 25.7886568, lng: -80.1416695 }
+    },
+    {
+      name: "Joe's Stone Crab",
+      address: "11 Washington Ave, Miami Beach, FL 33139",
+      rating: 4.8,
+      image: "https://base-discordia-app.s3.us-east-2.amazonaws.com/revelo-images/img-restaurant1.jpg",
+      category: "French",
+      distance: 5,
+      averagePrice: 100,
+      position: { lat: 25.770452, lng: -80.135042 }
     },
     {
       name: "Broken Shaker at Freehand",
-      address: "2727 Indian Creek Dr, Miami Beach, FL 61955",
+      address: "2727 Indian Creek Dr, Miami Beach, FL 33140",
       rating: 4.3,
       image: "https://base-discordia-app.s3.us-east-2.amazonaws.com/revelo-images/img-restaurant4.jpeg",
       category: "Fast Food",
       distance: 10,
-      averagePrice: 120
+      averagePrice: 120,
+      position: { lat: 25.8045614, lng: -80.1264185 }
     },
     {
       name: "MILA Restaurant",
-      address: "1636 Meridian Ave Rooftop, Miami Beach, FL 95136",
+      address: "1636 Meridian Ave Rooftop, Miami Beach, FL 33139",
       rating: 4.5,
       image: "https://base-discordia-app.s3.us-east-2.amazonaws.com/revelo-images/img-restaurant5.png",
       category: "Fast Food",
       distance: 2,
-      averagePrice: 200
+      averagePrice: 200,
+      position: { lat: 25.7900722, lng: -80.1367143 }
     },
   ]
 };
@@ -118,7 +129,7 @@ function useFetchData() {
     fetchData();
   }, []);
 
-  return { data, loading, setLoading, error };
+  return { data, loading, error };
 }
 
 const Slider = React.forwardRef<
@@ -169,7 +180,7 @@ const Slider = React.forwardRef<
 Slider.displayName = SliderPrimitive.Root.displayName;
 
 export default function RestaurantFinder() {
-  const { data, loading, setLoading } = useFetchData();
+  const { data, loading } = useFetchData();
   const [activeNavItem, setActiveNavItem] = useState<string>("Home")
   const [categorySearchFilter, setCategorySearchFilter] = useState<string[]>(["Italian"])
   const [distanceSearchFilter, setDistanceSearchFilter] = useState<number>(2)
@@ -181,30 +192,38 @@ export default function RestaurantFinder() {
 
 useEffect(() => {
   const initMap = () => {
-    setLoading(true)
+    
     try {
+      const position = { lat: 25.7871999, lng: -80.1405045 }
       if (mapRef.current && !mapInstanceRef.current) {
         const map = new google.maps.Map(mapRef.current, {
-          center: { lat: -23.55052, lng: -46.633308 },
-          zoom: 17,
+          center: position,
+          zoom: 16,
           disableDefaultUI: true,
           draggable: true,
           zoomControl: false,
           scrollwheel: false,
           disableDoubleClickZoom: true,
-          styles: [
-            { featureType: "all", elementType: "labels", stylers: [{ visibility: "off" }] },
-            { featureType: "road", elementType: "geometry", stylers: [{ visibility: "simplified" }] },
-            { featureType: "poi", stylers: [{ visibility: "off" }] },
-            { featureType: "transit", stylers: [{ visibility: "off" }] },
-          ],
+          mapId: "RESTAURANT_FINDER_MAP_ID",
+          
         });
         mapInstanceRef.current = map;
+
+        new google.maps.marker.AdvancedMarkerElement({
+          map,
+          position: data?.restaurants[0].position,
+          title: data?.restaurants[0].name || "Restaurant 01",
+        });
+        new google.maps.marker.AdvancedMarkerElement({
+          map,
+          position: data?.restaurants[1].position,
+          title: data?.restaurants[1].name || "Restaurant 02",
+        });
       }
     } catch (error) {
-      console.error(`Error on maps: ${error}`)
+      console.log(`Error on maps: ${error}`)
     }
-    setLoading(false)
+    
   };
 
   const loadGoogleMapsScript = () => {
@@ -223,7 +242,7 @@ useEffect(() => {
     }
 
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${Maps_API_KEY}&loading=async`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${Maps_API_KEY}&loading=async&libraries=marker`;
     script.async = true;
     script.defer = true;
     script.onload = () => {
@@ -235,8 +254,8 @@ useEffect(() => {
   loadGoogleMapsScript();
 
   return () => {
-    if ((window as any).initMap) {
-      delete (window as any).initMap;
+    if ((window).initMap) {
+      delete (window).initMap;
     }
   };
 }, [Maps_API_KEY]);
@@ -244,7 +263,7 @@ useEffect(() => {
   
 const SearchComponent = () => {
   return (
-    <div className="flex flex-col justify-center items-center w-[90%] py-1 mt-6 absolute top-0">
+    <div className="flex flex-col justify-center items-center w-[90%] py-1 mt-6 absolute top-0 z-20">
       {
         activeNavItem === "Restaurants" &&
         <div className="w-full flex justify-between items-center mb-2">
@@ -421,7 +440,7 @@ const SearchFilterDrawer = () => {
 const ListRestaurantsTab = () => {
   return (
     <>
-        <div className="bg-white shadow-[rgba(0,0,0,0.1)_0px_4px_5px_5px] w-full flex flex-col justify-center rounded-t-3xl font-['Lexend'] items-center absolute bottom-0 left-0 pb-[10dvh]">
+        <div className="bg-white shadow-[rgba(0,0,0,0.1)_0px_4px_5px_5px] w-full flex flex-col justify-center rounded-t-3xl font-['Lexend'] items-center absolute bottom-0 left-0 pb-[10dvh] z-40">
           <div className="w-full justify-center place-items-center py-2">
             <div className="w-10 h-1 bg-gray-200 rounded-xl" />
           </div>
@@ -488,7 +507,7 @@ const RestaurantCard = (item: Restaurant) => {
         <div
           ref={mapRef}
           id="google-map-background"
-          className="absolute inset-0 w-full h-full z-0"
+          className="absolute inset-0 w-full h-full z-10"
         />
       
       <div id="main" className={`
