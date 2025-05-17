@@ -181,10 +181,10 @@ export default function RestaurantFinder() {
   const { data, loading } = useFetchData();
   const [theme, setTheme] = useState("light");
   const [activeNavItem, setActiveNavItem] = useState<string>("Home")
-  const [categorySearchFilter, setCategorySearchFilter] = useState<string[]>(["Italian"])
-  const [distanceSearchFilter, setDistanceSearchFilter] = useState<number>(2)
-  const [ratingsSearchFilter, setRatingsSearchFilter] = useState<number[]>([3,4])
-  const [pricesSearchFilter, setPricesSearchFilter] = useState<number[]>([70,125])
+  const [categorySearchFilter, setCategorySearchFilter] = useState<string[]>([""])
+  const [distanceSearchFilter, setDistanceSearchFilter] = useState<number>(1)
+  const [ratingsSearchFilter, setRatingsSearchFilter] = useState<number[]>([])
+  const [pricesSearchFilter, setPricesSearchFilter] = useState<number[]>([0,250])
   const [searchData, setSearchData] = useState<Restaurant[]>([]);
   const [search, setSearch] = useState<string>("");
   
@@ -193,6 +193,7 @@ export default function RestaurantFinder() {
 
   // Fetch Google Maps API
   useEffect(() => {
+    setTheme("light")
     const initMap = () => {
       
       try {
@@ -524,22 +525,6 @@ export default function RestaurantFinder() {
     e.preventDefault();
   }
 
-  function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
-    const R = 6371;
-    const dLat = deg2rad(lat2 - lat1);
-    const dLon = deg2rad(lon2 - lon1);
-    const a = 
-        Math.sin(dLat/2) * Math.sin(dLat/2) +
-        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-        Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-    return R * c;
-  }
-
-  function deg2rad(deg: number) {
-    return deg * (Math.PI/180);
-  }
-
   const handleSearch = (search: string) => {
     if (!search.trim()) {
         setSearchData([]);
@@ -554,6 +539,7 @@ export default function RestaurantFinder() {
         
         setSearchData(newSearch);
     } catch (e) {
+        console.log(e)
         setSearchData([]);
     }
   }
