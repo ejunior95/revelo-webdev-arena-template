@@ -179,13 +179,14 @@ Slider.displayName = SliderPrimitive.Root.displayName;
 
 export default function RestaurantFinder() {
   const { data, loading } = useFetchData();
-  const [theme, setTheme] = useState("dark");
+  const [theme, setTheme] = useState("light");
   const [activeNavItem, setActiveNavItem] = useState<string>("Home")
   const [categorySearchFilter, setCategorySearchFilter] = useState<string[]>(["Italian"])
   const [distanceSearchFilter, setDistanceSearchFilter] = useState<number>(2)
   const [ratingsSearchFilter, setRatingsSearchFilter] = useState<number[]>([3,4])
   const [pricesSearchFilter, setPricesSearchFilter] = useState<number[]>([70,125])
   const [searchData, setSearchData] = useState<Restaurant[]>([]);
+  const [search, setSearch] = useState<string>("");
   
   const mapRef = React.useRef<HTMLDivElement>(null);
   const mapInstanceRef = React.useRef<google.maps.Map | null>(null);
@@ -276,7 +277,11 @@ export default function RestaurantFinder() {
         <div className="flex justify-between items-center w-full my-2 z-30">
           <div className={`w-[80%] ${theme === "dark" ? 'bg-black' : 'bg-white'} border py-3 rounded-2xl flex items-center justify-around`}>
             <Search className="text-[#F95624] w-6 h-6" />
-            <input className={`w-[80%] text-sm ${theme === "dark" ? 'text-white' : 'text-black'} bg-transparent outline-none border-none`} type="text" placeholder="Restaurant name or dish..." />
+            <input  
+              className={`w-[80%] text-sm ${theme === "dark" ? 'text-white' : 'text-black'} bg-transparent outline-none border-none`} 
+              type="text" 
+              onChange={(e) => [handleSearch(e.target.value), setSearch(e.target.value)]}
+              placeholder="Restaurant name or dish..." />
           </div>
           {SearchFilterDrawer()}
         </div>
@@ -429,7 +434,7 @@ export default function RestaurantFinder() {
 
             <DrawerFooter className="w-full">
               <DrawerClose className="w-full">
-                <Button className="w-full rounded-xl h-[6dvh] bg-[#F95624] hover:bg-[#F95624] text-white">Show results</Button>
+                <Button onClick={() => handleSearch(search)} className="w-full rounded-xl h-[6dvh] bg-[#F95624] hover:bg-[#F95624] text-white">Show results</Button>
               </DrawerClose>
             </DrawerFooter>
           </DrawerContent>
@@ -450,7 +455,7 @@ export default function RestaurantFinder() {
             </div>
 
             {
-              data?.restaurants.slice(0,2)
+              searchData?.slice(0,2)
               .map((restaurant: Restaurant) => (RestaurantCard(restaurant)))
             }
 
@@ -519,6 +524,40 @@ export default function RestaurantFinder() {
     e.preventDefault();
   }
 
+  function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+    const R = 6371;
+    const dLat = deg2rad(lat2 - lat1);
+    const dLon = deg2rad(lon2 - lon1);
+    const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    return R * c;
+  }
+
+  function deg2rad(deg: number) {
+    return deg * (Math.PI/180);
+  }
+
+  const handleSearch = (search: string) => {
+    if (!search.trim()) {
+        setSearchData([]);
+        return;
+    }
+
+    try {
+        const newRegex = new RegExp(search, 'i');
+        const newSearch = data?.restaurants?.filter(restaurant => 
+            newRegex.test(restaurant.name)
+        ) ?? [];
+        
+        setSearchData(newSearch);
+    } catch (e) {
+        setSearchData([]);
+    }
+  }
+
   return (
     loading ? ( 
       <> 
@@ -559,18 +598,18 @@ export default function RestaurantFinder() {
         { activeNavItem !== "History" && activeNavItem !== "Profile"  && SearchComponent() }
 
         {
-          activeNavItem === "Restaurants" && searchData && searchData.length > 0 && (
+          activeNavItem === "Restaurants" && searchData.length > 0 && (
               <ScrollArea className={`w-full h-[70dvh] py-4 mt-[20dvh]`}>
                 <div className="w-full flex flex-col justify-center items-center">
                   {
-                    data?.restaurants.map((restaurant: Restaurant) => (RestaurantCard(restaurant)))
+                    searchData?.map((restaurant: Restaurant) => (RestaurantCard(restaurant)))
                   }
                 </div>
               </ScrollArea>
             )
         }
         {
-          activeNavItem === "Restaurants" && (!searchData || searchData.length === 0) && (
+          activeNavItem === "Restaurants" && searchData.length === 0 && (
                  <div className="w-full h-dvh flex justify-center place-items-center text-center p-4">
                     <p className={`${theme === "dark" ? 'text-white' : 'text-black'}`}>No restaurants matching the current filters.</p>
                 </div>
@@ -718,7 +757,7 @@ export default function RestaurantFinder() {
           }
         </nav>
 
-        {/* { activeNavItem === "Home" && ListRestaurantsTab() } */}
+        { activeNavItem === "Home" && searchData.length && ListRestaurantsTab() }
 
       </div>
 
