@@ -19,6 +19,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Area, AreaChart, CartesianGrid, Line, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 interface IMenuItems {
   title: string,
@@ -80,7 +84,7 @@ type ChartData = {
 
 type MarketValue = {
   coin: string;
-  rise: string;
+  rise: number;
   percent: string;
   velve1: string;
   velve2: string;
@@ -101,8 +105,8 @@ type CashFlow = {
 };
 
 type Balance = {
-  total: string;
-  valueBTC: string;
+  total: number;
+  valueBTC: number;
 };
 
 type ApiResponse = {
@@ -129,7 +133,7 @@ const mockData: ApiResponse = {
   "market_values": [
     { 
       "coin": "BTC0456", 
-      "rise": "$35,567.00", 
+      "rise": 64200.00, 
       "percent": "+8,4%", 
       "velve1": "078,45647.23", 
       "velve2": "$567,558.678", 
@@ -140,7 +144,7 @@ const mockData: ApiResponse = {
     },
     { 
       "coin": "207537891", 
-      "rise": "02.14567", 
+      "rise": 2.14567, 
       "percent": "4%" , 
       "velve1": "$456,456.00", 
       "velve2": "$754,345.00", 
@@ -163,8 +167,8 @@ const mockData: ApiResponse = {
     "received": "30,000.00",
   },
   "balance": {
-    "total": "$600,000.00",
-    "valueBTC": "15.67386482973",
+    "total": 15.67386482973 * 64200.00,
+    "valueBTC": 15.67386482973,
   }
 };
 
@@ -194,12 +198,44 @@ function useFetchData() {
 
 export default function CryptoDashboard() {
   const { data, loading } = useFetchData();
-  const [theme, setTheme] = useState("light");
-  const [modeActive, setModeActive] = useState<string>('buy');
+  const [theme, setTheme] = useState("dark");
+  const [modeActive, setModeActive] = useState<string>('Buy');
   const [activeNavItem, setActiveNavItem] = useState<string>('Dash board');
+  const [currentTransactionBTC, setCurrentTransactionBTC] = useState<number>(0)
+  const [currentPriceBTC, setCurrentPriceBTC] = useState<number>(64200.00);
+  const [currentBalance, setCurrentBalance] = useState<number>(15.67386482973 * 64200.00);
+  const [currentAmountBTC, setCurrentAmountBTC] = useState<number>(15.67386482973);
+
+  const formatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    trailingZeroDisplay: 'stripIfInteger'
+  });
+
+  useEffect(() => {
+    // setTheme("dark")
+    setCurrentPriceBTC(64200.00)
+    setTheme("light")
+  },[])
+
+  const handleTransaction = (value: number) => {
+    console.log('LOOOOOOOOOOOOOOOG VALUE', value)
+    if(data) {
+      const balance = value * data.market_values[0].rise
+      console.log('LOOOOOOOOOOOOOOOG BALANCE', balance)
+      if(modeActive === 'Buy') {
+        setCurrentBalance(currentBalance - balance)
+        setCurrentAmountBTC(currentAmountBTC + value)
+      }
+      if(modeActive === 'Sell' && value <= currentAmountBTC) {
+        setCurrentBalance(currentBalance + balance)
+        setCurrentAmountBTC(currentAmountBTC - value)
+      } 
+    }
+  }
 
   
-const renderChart = () => {
+  const renderChart = () => {
     if (!data) return null;
 
     const positiveColor = '#10b981';
@@ -452,17 +488,17 @@ const renderChart = () => {
   
                   </div>
   
-                  <div id="container-balance" className={`w-full flex items-center justify-between md:w-[48%] bg-gradient-to-tr ${theme !== "dark" ? 'from-[#dadada] to-[#a5a5a9] text-black' : 'from-[#0D0D16] to-[#1F2029]'} shadow-2xl/30 p-8 lg:space-y-0 lg:py-10 lg:px-4`}>
+                  <div id="container-balance" className={`w-full flex flex-col lg:flex-row items-center justify-between md:w-[48%] bg-gradient-to-tr ${theme !== "dark" ? 'from-[#dadada] to-[#a5a5a9] text-black' : 'from-[#0D0D16] to-[#1F2029]'} shadow-2xl/30 p-8 lg:space-y-0 lg:py-10 lg:px-4`}>
                     
                     <div className="h-full flex flex-col justify-center space-y-1">
                       <p className="2xl:text-2xl">Total Balance</p>
                       <p className="text-xs text-gray-400">My balance</p>
-                      <p className="2xl:text-3xl text-lg font-bold">{data?.balance.total}</p>
+                      <p className="2xl:text-3xl text-lg font-bold">{formatter.format(currentBalance)}</p>
                     </div>
                     
                     <div className="h-full flex flex-col justify-end pb-10">
                       <p className="text-xs">BTC</p>
-                      <p className="text-xs">{data?.balance.valueBTC}</p>
+                      <p className="text-xs">{currentAmountBTC}</p>
                     </div>
   
                   </div>
@@ -471,13 +507,13 @@ const renderChart = () => {
 
                 <div id="container-chart" 
                   className="w-full my-20 min-h-[180px] md:min-h-[200px] lg:h-[28dvh] p-3 flex flex-col md:flex-row justify-around items-center space-y-4 md:space-y-0 md:space-x-4">
-                  <div className={`w-full p-4 md:p-6 bg-gradient-to-br ${theme !== "dark" ? 'from-[#dadada] to-[#a5a5a9] text-black' : 'from-[#0D0D16] to-[#1F2029]'} shadow-2xl/30 relative`}>
-                    <div className="absolute top-2 right-10 flex space-x-8">
-                      <div>
+                  <div className={`w-full p-4 md:p-6 bg-gradient-to-br ${theme !== "dark" ? 'from-[#dadada] to-[#a5a5a9] text-black' : 'from-[#0D0D16] to-[#1F2029]'} shadow-2xl/30 md:relative`}>
+                    <div className="md:absolute top-2 right-10 flex flex-col md:flex-row space-x-8">
+                      <div className={`flex flex-col justify-end items-end`}>
                         <p className="text-xs text-gray-500 text-right">Last price</p>
                         <p className="text-sm"><strong>469,000.00</strong></p>
                       </div>
-                      <div>
+                      <div className={`flex flex-col justify-end items-end`}>
                         <p className="text-xs text-gray-500 text-right">24h refuse</p>
                         <p className="text-sm"><strong>39,43 BTC</strong></p>
                       </div>
@@ -513,7 +549,7 @@ const renderChart = () => {
                                   <p className={`py-1 px-2 bg-[${mv.color}] text-black rounded-sm mr-2`}><strong>D</strong></p>
                                   {mv.coin}
                                 </TableCell>
-                                <TableCell>{mv.rise}</TableCell>
+                                <TableCell>{formatter.format(mv.rise || 0)}</TableCell>
                                 <TableCell className={`text-[${mv.color}]`}>{mv.percent}</TableCell>
                                 <TableCell>{mv.velve1}</TableCell>
                                 <TableCell>{mv.velve2}</TableCell>
@@ -534,14 +570,14 @@ const renderChart = () => {
                 <div className="px-4 flex-grow flex flex-col justify-start">
                   
                   <div className="flex w-full justify-around items-center mb-6">
-                    <button onClick={() => setModeActive('buy')} className={`
+                    <button onClick={() => setModeActive('Buy')} className={`
                       w-[48%] py-2 rounded-full text-xs sm:text-sm md:text-base transition-all duration-200 ease-in-out 
-                      ${modeActive === 'buy' ? `${theme !== "dark" ? 'bg-[#0F0E13] text-white' : 'bg-[#0F0E13] text-white'}` : `${theme !== "dark" ? 'text-black hover:bg-gray-500/80 hover:text-white' : 'text-gray-300 hover:bg-gray-500/80 hover:text-white'}`}`}>
+                      ${modeActive === 'Buy' ? `${theme !== "dark" ? 'bg-[#0F0E13] text-white' : 'bg-[#0F0E13] text-white'}` : `${theme !== "dark" ? 'text-black hover:bg-gray-500/80 hover:text-white' : 'text-gray-300 hover:bg-gray-500/80 hover:text-white'}`}`}>
                       Buy
                     </button>
-                    <button onClick={() => setModeActive('sell')} className={`
+                    <button onClick={() => setModeActive('Sell')} className={`
                       w-[48%] py-2 rounded-full text-xs sm:text-sm md:text-base transition-all duration-200 ease-in-out
-                      ${modeActive === 'sell' ? `${theme !== "dark" ? 'bg-[#0F0E13] text-white' : 'bg-[#0F0E13] text-white'}` : `${theme !== "dark" ? 'text-black hover:bg-gray-500/80 hover:text-white' : 'text-gray-300 hover:bg-gray-500/80 hover:text-white'}`}`}>
+                      ${modeActive === 'Sell' ? `${theme !== "dark" ? 'bg-[#0F0E13] text-white' : 'bg-[#0F0E13] text-white'}` : `${theme !== "dark" ? 'text-black hover:bg-gray-500/80 hover:text-white' : 'text-gray-300 hover:bg-gray-500/80 hover:text-white'}`}`}>
                       Sell
                     </button>
                   </div>
@@ -575,7 +611,49 @@ const renderChart = () => {
                       </div>
                     </div>
   
-                    <button className="bg-[#0C018A] hover:bg-[#1c1567] transition-all duration-200 ease-in-out w-full py-3 text-xl text-white rounded-lg cursor-pointer">Buy BTC</button>
+                    
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <button className="bg-[#0C018A] hover:bg-[#1c1567] transition-all duration-200 ease-in-out w-full py-3 text-xl text-white rounded-lg cursor-pointer">{modeActive} BTC</button>
+                      </DialogTrigger>
+                      <DialogContent className={`${theme !== 'dark' ? 'bg-white text-black' : 'bg-black text-white'}`}>
+                        <DialogHeader>
+                          <DialogTitle>{modeActive} BTC</DialogTitle>
+                          <DialogDescription>
+                            Enter the amount of BTC you wish to purchase. The current market price is displayed below. Once you're ready, click Confirm to proceed with the transaction.
+                          </DialogDescription>
+                        </DialogHeader>
+                          <div className="flex flex-col justify-start items-start">
+                            <Label htmlFor="valueBTC" className={`py-2`}>
+                              How many Bitcoins?
+                            </Label>
+                            <Input
+                              id="valueBTC"
+                              type="number"
+                              min="0"
+                              max={currentAmountBTC}
+                              step=".001"
+                              onChange={(e) => setCurrentTransactionBTC(Number(e.target.value))}
+                            />
+                            <p className="text-xs">(Current BTC price: $64,200.00)</p>
+                          </div>
+                        <DialogFooter>
+                          <DialogClose asChild>
+                            <Button
+                              onClick={() => handleTransaction(currentTransactionBTC)} 
+                              disabled={
+                                (modeActive === "Buy" && currentTransactionBTC * currentPriceBTC >= currentBalance) ||
+                                (modeActive === "Sell" && currentTransactionBTC >= currentAmountBTC)
+                              }
+                              className={`
+                                ${theme !== 'dark' ? 'bg-black text-white hover:bg-gray-800 hover:text-white' : 'bg-white text-black hover:bg-gray-200 hover:text-white'}`
+                              }>
+                              Confirm
+                            </Button>
+                          </DialogClose>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
   
                     <div className="bg-black border text-white border-white py-1 px-3 rounded-full absolute -bottom-5 -left-5">
                       <p className="text-xs">$10k</p>
