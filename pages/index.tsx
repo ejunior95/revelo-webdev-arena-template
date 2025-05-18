@@ -214,15 +214,13 @@ export default function CryptoDashboard() {
 
   useEffect(() => {
     // setTheme("dark")
-    setCurrentPriceBTC(64200.00)
     setTheme("light")
+    setCurrentPriceBTC(64200.00)
   },[])
 
   const handleTransaction = (value: number) => {
-    console.log('LOOOOOOOOOOOOOOOG VALUE', value)
     if(data) {
       const balance = value * data.market_values[0].rise
-      console.log('LOOOOOOOOOOOOOOOG BALANCE', balance)
       if(modeActive === 'Buy') {
         setCurrentBalance(currentBalance - balance)
         setCurrentAmountBTC(currentAmountBTC + value)
@@ -620,7 +618,7 @@ export default function CryptoDashboard() {
                         <DialogHeader>
                           <DialogTitle>{modeActive} BTC</DialogTitle>
                           <DialogDescription>
-                            Enter the amount of BTC you wish to purchase. The current market price is displayed below. Once you're ready, click Confirm to proceed with the transaction.
+                            Enter the amount of BTC you wish to purchase. The current market price is displayed below. Once you are ready, click Confirm to proceed with the transaction.
                           </DialogDescription>
                         </DialogHeader>
                           <div className="flex flex-col justify-start items-start">
