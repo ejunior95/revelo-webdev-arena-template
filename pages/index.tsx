@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { CircleX, Move, Play, RotateCw, Square, Trophy } from "lucide-react";
+import { CircleX, Move, Play, RotateCw, Square, Star, Trophy } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface SquareType {
@@ -17,7 +17,6 @@ interface GamePageProps {
   currentGridMode: 3 | 4;
   currentMoves: number;
   setMoves: React.Dispatch<React.SetStateAction<number>>;
-  setCurrentPage: (page: string) => void;
 }
 
 const HomePage: React.FC<HomePageProps> = ({
@@ -80,9 +79,11 @@ const HomePage: React.FC<HomePageProps> = ({
 
         </div>
 
-        <button onClick={() => setCurrentPage('Game')} className="bg-[#328EFF] px-4 py-3 rounded-md flex justify-center items-center space-x-2">
-        <Play size={20} />
-        <p className="text-white">Start Playing</p>
+        <button 
+          onClick={() => setCurrentPage('Game')} 
+          className="bg-[#328EFF] px-4 py-3 rounded-md flex justify-center items-center space-x-2 shadow-[rgba(0,0,0,0.2)_0px_3px_5px_5px]">
+          <Play size={20} />
+          <p className="text-white">Start Playing</p>
         </button>
     </div>
   );
@@ -92,7 +93,6 @@ const GamePage: React.FC<GamePageProps> = ({
   currentGridMode,
   currentMoves,
   setMoves,
-  setCurrentPage,
 }) => {
   const [squares, setSquares] = useState<SquareType[]>([]);
   const [isWin, setIsWin] = useState(false);
@@ -117,6 +117,13 @@ const GamePage: React.FC<GamePageProps> = ({
   };
 
   useEffect(() => {
+    const allOff = squares.every(square => !square.state);
+    if (allOff && squares.length > 0) {
+      setIsWin(true);
+    }
+  }, [squares]);
+
+  useEffect(() => {
     setSquares(initializeGrid(currentGridMode));
   }, [currentGridMode]);
 
@@ -135,56 +142,101 @@ const GamePage: React.FC<GamePageProps> = ({
   };
 
   return (
-    <div className="relative z-10 font-['Inter'] text-white min-h-screen max-h-screen w-full flex flex-col justify-center items-center">      
-      <div className="flex justify-center items-center space-x-4 mb-4 2xl:mb-10">
-      <img
-      src="https://base-discordia-app.s3.us-east-2.amazonaws.com/revelo-images/logo-light-puzzle.png"
-      alt="Logo Light Puzzle"
-      className={`w-16 xl:w-20 2xl:w-24 object-cover`}
-      />
-      <h1 className="font-['Anta'] text-[2.7rem] md:text-[4rem] 2xl:text-[5rem] font-black">Light Puzzle</h1>
-      </div>
+    <div className="relative z-10 font-['Inter'] min-h-screen text-white w-full flex flex-col justify-center items-center">   
+      {
+        !isWin ? 
+          <>
+            <div className="flex justify-center items-center space-x-4 2xl:mb-10">
+              <img
+              src="https://base-discordia-app.s3.us-east-2.amazonaws.com/revelo-images/logo-light-puzzle.png"
+              alt="Logo Light Puzzle"
+              className={`w-16 2xl:w-24 object-cover`}
+              />
+              <h1 className="font-['Anta'] text-[2.7rem] md:text-[3.3rem] 2xl:text-[5rem] font-black">Light Puzzle</h1>
+            </div>
 
 
-      <div className="flex flex-col lg:space-y-3 2xl:space-y-6 mb-6 xl:mb-8 2xl:mb-14 w-full md:max-w-[500px]">
-      
-      <p className="text-white mb-3 text-md 2xl:text-xl text-center xl:mb-4">Turn off all the lights in minimal moves!</p>
+            <div className="flex flex-col lg:space-y-2 2xl:space-y-6 mb-4 2xl:mb-14 w-full md:max-w-[500px]">
+            
+              <p className="text-white m-3 text-md 2xl:text-xl text-center">Turn off all the lights in minimal moves!</p>
 
 
-      <div className="bg-gray-400/80 p-4 flex justify-between items-center rounded-xl">
-      
-      <div className="flex justify-center items-center space-x-2">
-        <p>Moves:</p>
-        <p className="text-xl"><strong>{currentMoves}</strong></p>
-      </div>
+              <div className="bg-gray-400/80 p-4 flex justify-between items-center mx-3 md:mx-0 rounded-xl">
+
+              <div className="flex justify-center items-center space-x-2">
+                <p>Moves:</p>
+                <p className="text-xl"><strong>{currentMoves}</strong></p>
+              </div>
 
 
-      <button type="button" onClick={resetGame} className="bg-[#328EFF] py-2 px-4 rounded-md flex justify-center items-center space-x-2">
-        <RotateCw size={20} />
-        <p className="text-white">Reset</p>
-      </button>
+              <button type="button" onClick={resetGame} className="bg-[#4297fe] py-2 px-6 rounded-md flex justify-center items-center space-x-2 shadow-[rgba(0,0,0,0.2)_0px_3px_5px_5px]">
+                <RotateCw size={20} />
+                <p className="text-white">Reset</p>
+              </button>
 
 
-      </div>
-    
-      </div>
+              </div>
+          
+            </div>
 
 
-      <div className={`grid ${currentGridMode === 3 ? 'grid-cols-3' : 'grid-cols-4'} gap-2 sm:gap-4 p-2 sm:p-4 rounded-lg bg-gray-900/70 w-full max-w-[300px] sm:max-w-[400px] aspect-square`}>
-        {squares.map((item) => (
-          <button
-            type="button"
-            onClick={() => handleSquareClick(item.id)}
-            key={item.id}
-            aria-label={`Square ${item.id + 1} - State: ${item.state ? 'On' : 'Off'}`}
-            className={`
-              rounded-lg transition-colors duration-150 ease-in-out
-              w-full h-full  // Para preencher o espaço do grid cell
-              ${item.state ? 'bg-[#FBBF24] hover:bg-yellow-500' : 'bg-[#585561] hover:bg-gray-600'}
-            `}
-          />
-        ))}
-      </div>
+            <div className={`
+                grid gap-2 sm:gap-4 p-2 sm:p-4 rounded-lg bg-gray-900/70 w-full md:max-w-[300px] 2xl:max-w-[400px] aspect-square
+                ${currentGridMode === 3 ? 'grid-cols-3' : 'grid-cols-4'} 
+              `}>
+              {squares.map((item) => (
+                <button
+                  type="button"
+                  onClick={() => handleSquareClick(item.id)}
+                  key={item.id}
+                  aria-label={`Square ${item.id + 1} - State: ${item.state ? 'On' : 'Off'}`}
+                  className={`
+                    rounded-lg transition-colors duration-150 ease-in-out w-full h-full
+                    ${item.state ? 'bg-[#FBBF24] hover:bg-yellow-500' : 'bg-[#585561] hover:bg-gray-600'}
+                  `}
+                />
+              ))}
+            </div>
+          </>
+        :
+          <>
+            <div className="flex flex-col justify-center items-center 2xl:mb-4">
+            <Trophy className="text-[#FBBF24]" size={80} />
+            <h1 className="text-[2.7rem] md:text-[3.2rem] -mt-4 2xl:text-[5rem] font-semibold">Victory!</h1>
+            </div>
+
+
+            <div className={`px-4 rounded-lg bg-gray-900/70 w-full max-w-[300px] sm:max-w-[400px]`}>
+              <div className="flex justify-between items-center border-b border-gray-500">
+                <p className="text-white text-xl text-center">Total Moves</p>
+                <h1 className="font-['Anta'] text-[5rem] text-[#FBBF24] font-black">{currentMoves}</h1>
+              </div>
+              <div className="flex flex-col justify-between items-center 2xl:space-y-4 xl:space-y-2 p-2 2xl:p-4">
+                <div className="flex justify-center items-center space-x-2 mt-2">
+                  <Star size={24} className={`p-2 text-[#FBBF24] bg-[#524F5A] rounded-full w-10 h-10`} />
+                  <Star size={24} className={`p-2 text-[#FBBF24] bg-[#524F5A] rounded-full w-10 h-10`} />
+                  <Star size={24} className={`p-2 bg-[#524F5A] rounded-full w-10 h-10`} />
+                </div>
+                <p className="text-white text-md text-center xl:mb-4">GREAT JOB!</p>
+              </div>
+            </div>
+
+            <button onClick={resetGame} className="bg-[#328EFF] px-4 w-full max-w-[300px] sm:max-w-[400px] py-3 rounded-md flex justify-center items-center space-x-2 mt-8 2xl:mb-10 shadow-[rgba(0,0,0,0.2)_0px_3px_5px_5px]">
+              <RotateCw size={20} />
+              <p className="text-white">Play Again</p>
+            </button>
+
+            <div className="flex justify-center items-center space-x-4 mt-4">
+              <img
+              src="https://base-discordia-app.s3.us-east-2.amazonaws.com/revelo-images/logo-light-puzzle.png"
+              alt="Logo Light Puzzle"
+              className={`w-14 object-cover`}
+              />
+              <h1 className="font-['Anta'] text-[2.7rem] font-black">Light Puzzle</h1>
+            </div>
+
+          </>
+      }   
 
     </div>
   );
@@ -222,7 +274,6 @@ export default function SquarePuzzleGame() {
             currentGridMode={currentGridMode}
             currentMoves={currentMoves}
             setMoves={setMoves}
-            setCurrentPage={setCurrentPage}
           />
         )}
       </div>
