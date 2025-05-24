@@ -1568,17 +1568,17 @@ export default function RestaurantFinder() {
 // export default App;
 
 // Zod Schema
-export const Schema = {
-    "commentary": "This is a modern restaurant finder app UI that displays a map-based discovery, list browsing, and detailed filtering options for cuisine, rating, and distance.",
-    "template": "nextjs-developer",
-    "title": "Restaurant Finder",
-    "description": "A modern restaurant finder app UI showing map-based discovery, list browsing, and detailed filtering options for cuisine, rating, and distance.",
-    "additional_dependencies": [
-        "@react-google-maps/api"
-    ],
-    "has_additional_dependencies": true,
-    "install_dependencies_command": "npm install @react-google-maps/api",
-    "port": 3000,
-    "file_path": "pages/index.tsx",
-    "code": "<see code above>"
-}
+// export const Schema = {
+//     "commentary": "This is a modern restaurant finder app UI that displays a map-based discovery, list browsing, and detailed filtering options for cuisine, rating, and distance.",
+//     "template": "nextjs-developer",
+//     "title": "Restaurant Finder",
+//     "description": "A modern restaurant finder app UI showing map-based discovery, list browsing, and detailed filtering options for cuisine, rating, and distance.",
+//     "additional_dependencies": [
+//         "@react-google-maps/api"
+//     ],
+//     "has_additional_dependencies": true,
+//     "install_dependencies_command": "npm install @react-google-maps/api",
+//     "port": 3000,
+//     "file_path": "pages/index.tsx",
+//     "code": "<see code above>"
+// }
